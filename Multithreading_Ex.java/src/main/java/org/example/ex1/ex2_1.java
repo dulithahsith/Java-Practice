@@ -1,17 +1,25 @@
 package org.example.ex2;
 
-import java.util.Queue;
+import java.util.List;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class Breads{
     int capacity;
-    Queue<String> breads;
+    List<String> breads;
+    AtomicInteger num = new AtomicInteger(0);
+    Lock lock = new ReentrantLock();
+    Condition isFull = lock.newCondition();
+    Condition isOver = lock.newCondition();
 
     public Breads(int capacity){
         this.capacity = capacity;
         this.breads = new LinkedList<>();
     }
-    public synchronized void produce(String bread){
+    public void produce(String bread){
         while(breads.size()==capacity){
             try {
                 wait();
@@ -19,15 +27,13 @@ class Breads{
                 throw new RuntimeException(e);
             }
         }
-        breads.add(bread);
+        breads.add(num.get(),bread);
         System.out.println("Produced: "+bread);
-        notify();
     }
-    public synchronized void consume(){
+    public void consume(){
         while(breads.isEmpty()){
             try {
                 System.out.println("Customer is waiting...");
-                wait();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
