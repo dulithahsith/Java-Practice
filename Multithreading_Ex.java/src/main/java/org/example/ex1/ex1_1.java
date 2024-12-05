@@ -6,44 +6,41 @@ import java.util.concurrent.locks.ReentrantLock;
 class Worker {
     private static final ReentrantLock re = new ReentrantLock();
     private static final Condition isOdd = re.newCondition();
+    private static final Condition isEven = re.newCondition();
 
-
-    int number = 0;
-
+    int number = 1;
 
     public void odd_even_inc() throws InterruptedException {
         while (number < 10) {
-            number += 1;
             re.lock();
             try{
-
-            }
-            catch (InterruptedException e){
-
+                if (Thread.currentThread().getName().equals("Thread-0")) {//even thread
+                    if (number % 2 == 0) {
+                        System.out.println("\nThread-0 :" + number);
+                        number += 1;
+                        isOdd.signal();
+                    } else {
+                        isEven.await();
+                    }
+                } else {
+                    if (number % 2 == 1) {     // odd thread
+                        System.out.println("\nThread-1 :" + number);
+                        number += 1;
+                        isEven.signal();
+                    } else {
+                        isOdd.await();
+                    }
+                }
             }
             finally {
+                re.unlock();
+            }
 
-            }
-            if (Thread.currentThread().getName().equals("Thread-0")) {
-                if (number % 2 == 0) {
-                    System.out.println("\nThread-0 :" + number);
-                    notify();
-                } else {
-                    wait();
-                }
-            } else {
-                if (number % 2 == 1) {
-                    System.out.println("\nThread-1 :" + number);
-                    notify();
-                } else {
-                    wait();
-                }
-            }
         }
     }
 }
 
-public class ex1{
+public class ex1_1{
     public static void main(String[] args) throws InterruptedException {
         Worker worker = new Worker();
         Thread t1 = new Thread(()-> {
