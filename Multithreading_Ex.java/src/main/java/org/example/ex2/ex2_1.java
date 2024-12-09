@@ -7,7 +7,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-class Breads{
+class Breadss{
     int capacity;
     List<String> breads;
     AtomicInteger num = new AtomicInteger(0);
@@ -15,36 +15,44 @@ class Breads{
     Condition isFull = lock.newCondition();
     Condition isOver = lock.newCondition();
 
-    public Breads(int capacity){
+    public Breadss(int capacity){
         this.capacity = capacity;
         this.breads = new LinkedList<>();
     }
+
     public void produce(String bread){
-        while(breads.size()==capacity){
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+        lock.lock();
+        try{
+            while(breads.size()==capacity){
+                isFull.wait();
             }
+            breads.add(num.get(),bread);
+            System.out.println("Produced: "+bread);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
         }
-        breads.add(num.get(),bread);
-        System.out.println("Produced: "+bread);
     }
     public void consume(){
-        while(breads.isEmpty()){
-            try {
+        lock.lock();
+        try{
+            while(breads.isEmpty()){
                 System.out.println("Customer is waiting...");
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                isOver.await();
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
         }
-        String bread = breads.poll();
+        String bread = breads.removeFirst();
         System.out.println("Consumed: "+bread);
         notify();
     }
 }
 
-public class ex2{
+public class ex2_1{
     public static void main(String[] args) throws InterruptedException {
         Breads breads = new Breads(5);
 
