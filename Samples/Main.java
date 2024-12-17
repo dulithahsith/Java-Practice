@@ -1,9 +1,9 @@
-class A{
-    public A(){
+class aA{
+    public aA(){
         super();
         System.out.println("In A");
     }
-    public A(int n){
+    public aA(int n){
         super();
         System.out.println("In A int");
     }
