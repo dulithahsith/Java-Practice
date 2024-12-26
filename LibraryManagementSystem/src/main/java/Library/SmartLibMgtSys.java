@@ -204,43 +204,45 @@ public class SmartLibMgtSys {
         }
     }
 
-    public void testUserActions(String memID, String ISBN) {
+    public void testUserActions(String ISBN,String memID) {
         try {
-            // Register a new member (we assume this part is already done)
-            LibraryMember mem = new LibraryMember();
-            mem.setName("User " + memID);
-            mem.setAddress("A of " + memID);
-            mem.setEmailAddress(memID + "@example.com");
-            mem.setBorrowed(new ArrayList<String>());
-            mem.setLastRenewDate(LocalDate.now());
-            memhandle.addMember(mem);
-
-            // Register a new book (for testing purposes)
-            Book book = new Book();
-            book.setISBN(ISBN);
-            book.setTitle("Test Book " + ISBN);
-            book.setAuthor("Author " + ISBN);
-            book.setGenre(Book.Genre.MYSTERY);
-            book.setPubYear(2024);
-            book.setAvailable(true);
-            libcat.addBook(book);
-
-//            // Borrow the book
-//            System.out.println("User " + memID + " borrowing book with ISBN: " + ISBN);
-//            libcat.borrowBook(memhandle, memID, ISBN);
+//            // Register a new member (we assume this part is already done)
+//            LibraryMember mem = new LibraryMember();
+//            mem.setName("User " + memID);
+//            mem.setAddress("A of " + memID);
+//            mem.setEmailAddress(memID + "@example.com");
+//            mem.setBorrowed(new ArrayList<String>());
+//            mem.setLastRenewDate(LocalDate.now());
+//            memhandle.addMember(mem);
 //
-//            // Sleep for a while to simulate delay
-//            Thread.sleep(1000);
+//            // Register a new book (for testing purposes)
+//            Book book = new Book();
+//            book.setISBN(ISBN);
+//            book.setTitle("Test Book " + ISBN);
+//            book.setAuthor("Author " + ISBN);
+//            book.setGenre(Book.Genre.MYSTERY);
+//            book.setPubYear(2024);
+//            book.setAvailable(true);
+//            libcat.addBook(book);
+
+            // Borrow the book
+            System.out.println("User " + memID + " borrowing book with ISBN: " + ISBN);
+            libcat.borrowBook(memhandle, memID, ISBN);
+
+            // Sleep for a while to simulate delay
+            Thread.sleep(1000);
 
 //            Return the book
 //            System.out.println("User " + memID + " returning book with ISBN: " + ISBN);
 //            libcat.returnBook(memhandle, memID, ISBN);
 
-        } catch (InvalidIsbnException e) {
-            e.printStackTrace();
-        } catch (InvalidEmailException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidYearException e) {
+//        } catch (InvalidIsbnException e) {
+//            e.printStackTrace();
+//        } catch (InvalidEmailException e) {
+//            throw new RuntimeException(e);
+//        } catch (InvalidYearException e) {
+//            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -258,14 +260,14 @@ public class SmartLibMgtSys {
 //                final String memID = memIDs[i];
 //                final String ISBN = ISBNs[i];
 //                executor.submit(() -> {
-//                    lib.testUserActions(memID, ISBN);  // Each user performs actions concurrently
+//                    lib.testUserActions(ISBN,memID);  // Each user performs actions concurrently
 //                });
 //            }
 //
 //            // Shutdown the executor after all tasks are complete
 //            executor.shutdown();
 //        }
-//
+
 //        BlockingLibraryServer bls = new BlockingLibraryServer(lib);
 //        bls.start();
     }

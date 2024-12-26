@@ -10,8 +10,19 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Iterator;
 
+// Wrapper class to manage both ByteBuffer and StringBuilder for a client connection
+class ClientAttachment {
+    ByteBuffer buffer;
+    StringBuilder stringBuilder;
+
+    public ClientAttachment(int bufferSize) {
+        this.buffer = ByteBuffer.allocate(bufferSize);
+        this.stringBuilder = new StringBuilder();
+    }
+}
+
 public class NonBlockingLibraryServer {
-    private static SmartLibMgtSys lib;
+    private final SmartLibMgtSys lib;
 
     public NonBlockingLibraryServer(SmartLibMgtSys lib) {
         this.lib = lib;
@@ -28,7 +39,7 @@ public class NonBlockingLibraryServer {
             System.out.println("Non-Blocking Library Server is running on port 8080...");
 
             while (true) {
-                selector.select();
+                selector.select(); // Wait for events
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
                 while (keys.hasNext()) {
@@ -45,68 +56,64 @@ public class NonBlockingLibraryServer {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Server Error: " + e.getMessage());
         }
     }
 
     private void handleAccept(ServerSocketChannel serverChannel, Selector selector) throws IOException {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
-        clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
+
+        // Attach ClientAttachment to manage ByteBuffer and StringBuilder
+        clientChannel.register(selector, SelectionKey.OP_READ, new ClientAttachment(1024));
         System.out.println("New client connected: " + clientChannel.getRemoteAddress());
+
         clientChannel.write(ByteBuffer.wrap("Welcome to the Smart Library Management System!\n".getBytes()));
     }
 
     private void handleRead(SelectionKey key) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = (ByteBuffer) key.attachment();
+        ClientAttachment attachment = (ClientAttachment) key.attachment();
 
         try {
-            int bytesRead = clientChannel.read(buffer);  // Reads from the channel into the buffer
+            int bytesRead = clientChannel.read(attachment.buffer);
 
             if (bytesRead == -1) {
-                clientChannel.close();  // Client has closed the connection
+                System.out.println("Client disconnected: " + clientChannel.getRemoteAddress());
+                closeChannel(clientChannel);
                 return;
             }
 
-            // If we read any bytes, process them
             if (bytesRead > 0) {
-                buffer.flip();  // Switch to reading mode
+                attachment.buffer.flip(); // Switch to read mode
 
-                StringBuilder input = new StringBuilder();
-                while (buffer.hasRemaining()) {
-                    char c = (char) buffer.get();
+                while (attachment.buffer.hasRemaining()) {
+                    char c = (char) attachment.buffer.get();
+                    attachment.stringBuilder.append(c);
+
+                    // Check for full command (new line '\n')
                     if (c == '\n') {
-                        break;  // Stop reading when newline is found
+                        String command = attachment.stringBuilder.toString().trim();
+                        System.out.println("Received: " + command);
+
+                        String response = processQuery(command);
+
+                        // Prepare response buffer for writing
+                        ByteBuffer responseBuffer = ByteBuffer.wrap((response + "\n").getBytes());
+                        key.interestOps(SelectionKey.OP_WRITE);
+                        key.attach(responseBuffer);
+
+                        attachment.stringBuilder.setLength(0); // Clear the accumulated input
                     }
-                    input.append(c);
                 }
 
-                String command = input.toString().trim();
-                if (!command.isEmpty()) {
-                    System.out.println("Received: " + command);
-                    String response = processQuery(command);
-
-                    // Prepare the response buffer
-                    ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes());
-                    key.interestOps(SelectionKey.OP_WRITE);  // Switch to write mode
-                    key.attach(responseBuffer);  // Attach the response buffer
-                }
-
-                buffer.compact();  // Move unprocessed data to the start of the buffer
+                attachment.buffer.clear(); // Clear the buffer for the next read
             }
-
         } catch (IOException e) {
-            try {
-                clientChannel.close();  // Ensure the channel is closed if error occurs
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+            System.err.println("Error reading from client: " + e.getMessage());
+            closeChannel(clientChannel);
         }
     }
-
-
-
 
     private void handleWrite(SelectionKey key) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
@@ -114,16 +121,15 @@ public class NonBlockingLibraryServer {
 
         try {
             clientChannel.write(buffer);
+
             if (!buffer.hasRemaining()) {
                 buffer.clear();
                 key.interestOps(SelectionKey.OP_READ);
+                key.attach(new ClientAttachment(1024)); // Reattach new ClientAttachment
             }
         } catch (IOException e) {
-            try {
-                clientChannel.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+            System.err.println("Error writing to client: " + e.getMessage());
+            closeChannel(clientChannel);
         }
     }
 
@@ -134,20 +140,20 @@ public class NonBlockingLibraryServer {
 
         switch (command.toLowerCase()) {
             case "1":
-                return "Books: \n" + lib.getLibcat().printAll() + "\n";
+                return "Books: \n" + lib.getLibcat().printAll();
             case "2":
-                return "Members: \n" + lib.getMemhandle().printAll() + "\n";
+                return "Members: \n" + lib.getMemhandle().printAll();
             case "3":
                 return registerBook(data);
             default:
-                return "Invalid command. Use '1', '2', or '3'.\n";
+                return "Invalid command. Use '1' for books, '2' for members, or '3' to add a book.";
         }
     }
 
     private String registerBook(String data) {
         String[] bookDetails = data.split("\\s+", 4);
         if (bookDetails.length < 4) {
-            return "Error: Invalid input format. Use: write_book ISBN Title Author Year\n";
+            return "Error: Invalid input format. Use: ISBN Title Author Year";
         }
 
         String isbn = bookDetails[0];
@@ -159,17 +165,26 @@ public class NonBlockingLibraryServer {
             int year = Integer.parseInt(yearString);
             Book book = new Book(isbn, title, author, year);
             lib.getLibcat().addBook(book);
-            return "Book registered successfully: " + book.toString() + "\n";
-
+            return "Book registered successfully: " + book.toString();
         } catch (NumberFormatException e) {
-            return "Error: Year must be a valid number.\n";
+            return "Error: Year must be a valid number.";
         }
     }
 
-    public static void main(String[] args){
+    private void closeChannel(SocketChannel clientChannel) {
+        try {
+            if (clientChannel != null && clientChannel.isOpen()) {
+                System.out.println("Closing connection to client: " + clientChannel.getRemoteAddress());
+                clientChannel.close();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
         SmartLibMgtSys lib = new SmartLibMgtSys();
         NonBlockingLibraryServer nbls = new NonBlockingLibraryServer(lib);
         nbls.start();
     }
-
 }
