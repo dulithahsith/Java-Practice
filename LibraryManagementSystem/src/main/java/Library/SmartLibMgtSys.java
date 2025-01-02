@@ -249,7 +249,7 @@ public class SmartLibMgtSys {
 
     public static void main(String[] args){
         SmartLibMgtSys lib = new SmartLibMgtSys();
-        lib.test();
+//        lib.test();
 
 
 //        try (ExecutorService executor = Executors.newFixedThreadPool(3)) {
@@ -268,7 +268,7 @@ public class SmartLibMgtSys {
 //            executor.shutdown();
 //        }
 
-//        BlockingLibraryServer bls = new BlockingLibraryServer(lib);
-//        bls.start();
+        BlockingLibraryServer bls = new BlockingLibraryServer(lib);
+        bls.start();
     }
 }

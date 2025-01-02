@@ -2,6 +2,7 @@ package com.libApp.LibraryMgtSystem.controllers;
 
 import com.libApp.LibraryMgtSystem.models.Book;
 import com.libApp.LibraryMgtSystem.services.BookService;
+import com.libApp.LibraryMgtSystem.services.DataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class BookController {
 
     @GetMapping
     public ConcurrentHashMap<String,Book> getAllBooks(){
-        return  bookService.getAllBooks();
+        return  DataService.loadBooks();
     }
 
     @PostMapping

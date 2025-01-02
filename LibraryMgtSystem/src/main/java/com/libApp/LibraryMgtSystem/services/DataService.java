@@ -34,7 +34,7 @@ public class DataService {
             oos.writeObject(books);
         }
         catch (IOException e){
-            System.out.println("Error saving booiks: "+e.getMessage());
+            System.out.println("Error saving books: "+e.getMessage());
         }
     }
 

@@ -4,6 +4,7 @@ import com.libApp.LibraryMgtSystem.models.Book;
 import com.libApp.LibraryMgtSystem.models.LibraryMember;
 import org.springframework.stereotype.Service;
 
+import javax.xml.crypto.Data;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -23,12 +24,10 @@ public class BookService {
         members=DataService.loadMembers();
     }
 
-    public ConcurrentHashMap<String,Book> getAllBooks(){
-        return books;
-    }
 
     public void addBook(Book book){
         books.put(book.getISBN(), book);
+        DataService.saveBooks(books);
     }
 
     public List<Book> searchByTitle(String title){
@@ -58,6 +57,7 @@ public class BookService {
     }
 
     public synchronized void borrowBook(String memID, String ISBN) {
+        members = DataService.loadMembers();
         if (!books.containsKey(ISBN)) {
             throw new IllegalArgumentException("Invalid ISBN. Book not found in the catalog.");
         }
@@ -95,6 +95,7 @@ public class BookService {
     }
 
     public synchronized void returnBook(String memID, String ISBN) {
+        members = DataService.loadMembers();
         if (!books.containsKey(ISBN)) {
             throw new IllegalArgumentException("Invalid ISBN. Book not found in the catalog.");
         }
@@ -124,7 +125,7 @@ public class BookService {
         // Save changes
         DataService.saveBooks(books);
         DataService.saveMembers(members);
-
+        this.members = DataService.loadMembers();
         System.out.println("Book returned successfully.");
     }
 }
