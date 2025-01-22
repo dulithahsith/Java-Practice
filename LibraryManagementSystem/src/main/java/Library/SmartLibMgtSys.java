@@ -206,14 +206,14 @@ public class SmartLibMgtSys {
 
     public void testUserActions(String ISBN,String memID) {
         try {
-//            // Register a new member (we assume this part is already done)
-//            LibraryMember mem = new LibraryMember();
-//            mem.setName("User " + memID);
-//            mem.setAddress("A of " + memID);
-//            mem.setEmailAddress(memID + "@example.com");
-//            mem.setBorrowed(new ArrayList<String>());
-//            mem.setLastRenewDate(LocalDate.now());
-//            memhandle.addMember(mem);
+            // Register a new member (we assume this part is already done)
+            LibraryMember mem = new LibraryMember();
+            mem.setName("User " + memID);
+            mem.setAddress("A of " + memID);
+            mem.setEmailAddress(memID + "@example.com");
+            mem.setBorrowed(new ArrayList<String>());
+            mem.setLastRenewDate(LocalDate.now());
+            memhandle.addMember(mem);
 //
 //            // Register a new book (for testing purposes)
 //            Book book = new Book();
@@ -225,9 +225,9 @@ public class SmartLibMgtSys {
 //            book.setAvailable(true);
 //            libcat.addBook(book);
 
-            // Borrow the book
-            System.out.println("User " + memID + " borrowing book with ISBN: " + ISBN);
-            libcat.borrowBook(memhandle, memID, ISBN);
+//            // Borrow the book
+//            System.out.println("User " + memID + " borrowing book with ISBN: " + ISBN);
+//            libcat.borrowBook(memhandle, memID, ISBN);
 
             // Sleep for a while to simulate delay
             Thread.sleep(1000);
@@ -243,6 +243,8 @@ public class SmartLibMgtSys {
 //        } catch (InvalidYearException e) {
 //            throw new RuntimeException(e);
         } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidEmailException e) {
             throw new RuntimeException(e);
         }
     }

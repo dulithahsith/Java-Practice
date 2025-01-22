@@ -23,11 +23,9 @@ public class BlockingLibraryServer {
         try (ServerSocket serverSocket = new ServerSocket(8080)) {
             System.out.println("Library Server is running on port 8080...");
 
-            // Continuously accept incoming client connections
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected, creating a new thread to handle the client...");
-                // Handle each client in a new thread
                 new Thread(() -> handleClient(clientSocket)).start();
             }
         } catch (IOException e) {

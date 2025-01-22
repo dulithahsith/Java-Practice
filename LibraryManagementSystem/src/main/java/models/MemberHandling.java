@@ -32,7 +32,7 @@ public class MemberHandling{
         return members;
     }
 
-    public synchronized void addMember(LibraryMember mem){
+    public void addMember(LibraryMember mem){
         if (members.isEmpty()){
             mem.setMemID("M000000");
         }
