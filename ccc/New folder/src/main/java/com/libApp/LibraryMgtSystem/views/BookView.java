@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 
 @Route("books")
-@Component
 public class BookView extends VerticalLayout {
     private RestTemplate restTemplate = new RestTemplate();
     private final String BASE_URL = "http://localhost:8080/api/books";
